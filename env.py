@@ -5,6 +5,7 @@ class Env:
     def __init__(self, nb_rows=4, nb_cols=4):
         self.nb_rows, self.nb_cols = nb_rows, nb_cols
         self.reset()
+        self.step_done = False
 
     def reset(self):
         self.done = False
@@ -16,10 +17,19 @@ class Env:
         print(self.state)
 
     def step(self, action):
-        self.move_right()
+        while not self.step_done:
+            if action == 0:
+                self.move_right()
+            elif action == 1:
+                self.move_left()
+            elif action == 2:
+                self.move_up()
+            elif action == 3:
+                self.move_down()
+
         self.update_empty_cells()
         self.add_number()
-        print(self.state)
+        self.step_done = False
         return self.state, self.reward, self.done, None
 
     def update_empty_cells(self):
@@ -50,14 +60,49 @@ class Env:
         return row
 
     def move_right(self):
+        new_state = np.copy(self.state)
         for row in range(self.nb_rows):
-            self.state[row] = self.move(self.state[row])
+            new_state[row] = self.move(self.state[row])
+        if not np.array_equal(new_state, self.state):
+            self.state = new_state
+            self.step_done = True
 
+    def move_left(self):
+        self.state = np.flip(self.state, axis=1)
+        self.move_right()
+        self.state = np.flip(self.state, axis=1)
+
+    def move_down(self):
+        self.state = self.state.T
+        self.move_right()
+        self.state = self.state.T
+
+    def move_up(self):
+        self.state = self.state.T
+        self.state = np.flip(self.state, axis=1)
+        self.move_right()
+        self.state = np.flip(self.state, axis=1)
+        self.state = self.state.T
+
+    def is_done(self):
+        if np.sum(self.empty_cells) == 0:
+            for row in enumerate(self.nb_rows):
+                for col in enumerate(self.nb_cols):
+                    if col != self.nb_cols-1 and self.state[row][col] == self.state[row][col+1]:
+                        pass
+                    if row != self.nb_rows-1 and self.state[row][col] == self.state[row+1][col]:
+                        pass
+            self.done = True
 
 
 if __name__ == '__main__':
     env = Env()
 
-    for i in range(5):
-        _, _, _, _ = env.step(None)
+    step = 0
+    while not env.done:
+        action = np.random.randint(0, 4, size=1)[0]
+        new_state, _, _, _ = env.step(action)
+        step += 1
+        print('Step: {}'.format(step))
+        print(new_state)
 
