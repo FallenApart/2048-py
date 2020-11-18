@@ -15,10 +15,11 @@ class Env:
         self.update_empty_cells()
         self.add_number()
         self.add_number()
-        print(self.state)
+        return self.state
 
-    def step(self, action):
+    def step(self, action, score):
         state = np.copy(self.state)
+        self.reward = 0
         if action == 0:
             self.move_right()
         elif action == 1:
@@ -28,12 +29,13 @@ class Env:
         elif action == 3:
             self.move_down()
         if np.array_equal(state, self.state):
-            self.reward = - 2048  # The number is arbitrarily large
+            punishpent = - np.abs(score) / 2 - 10
         else:
+            punishpent = 0
             self.update_empty_cells()
             self.add_number()
         self.is_done()
-        return self.state, self.reward, self.done, None
+        return self.state, self.reward, self.done, None, punishpent
 
     def update_empty_cells(self):
         self.empty_cells = self.state == 0
