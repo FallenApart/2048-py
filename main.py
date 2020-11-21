@@ -19,8 +19,7 @@ def main(args):
     env = Env()
 
     score_history, avg_score_history = [], []
-    game_score_history, avg_game_score_history = [], []
-    nb_episodes = 2000
+    nb_episodes = 10
 
     window = 100
 
@@ -30,16 +29,13 @@ def main(args):
     for i in range(nb_episodes):
         done = False
         score = 0
-        game_score = 0
         state_np = env.reset()
 
         while not done:
             action_np = agent.choose_action(state_np)
-            new_state_np, reward_np, done, info, punishment = env.step(action_np, score)
+            new_state_np, reward_np, done, info = env.step(action_np)
             agent.store_transition(state_np, action_np, reward_np)
             state_np = new_state_np
-            game_score += reward_np
-            score += reward_np + punishment
             if score < - 100:
                 done = True
 
@@ -47,30 +43,21 @@ def main(args):
         avg_score = np.mean(score_history[-window:])
         avg_score_history.append(avg_score)
 
-        game_score_history.append(game_score)
-        avg_game_score = np.mean(game_score_history[-window:])
-        avg_game_score_history.append(avg_game_score)
-        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}; Game score: {:.1f}; Avg game score: {:.1f}'.format(i, score, avg_score, game_score, avg_game_score))
+        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}'.format(i, score, avg_score))
 
         with tb_summary_writer.as_default():
             tf.summary.scalar('score', score, step=i)
             tf.summary.scalar('avg score', avg_score, step=i)
-            tf.summary.scalar('game score', game_score, step=i)
-            tf.summary.scalar('avg game score', avg_game_score, step=i)
 
         agent.learn()
 
     filename = 'logs/{}/fig.png'.format(args.idx)
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(2, 2)
+    fig, (ax1, ax2) = plt.subplots(2)
     ax1.set_title('Score')
     ax1.plot(score_history)
     ax2.plot(avg_score_history)
     ax2.set_title('Avg score ({})'.format(window))
 
-    ax1.set_title('Game score')
-    ax1.plot(game_score_history)
-    ax2.plot(avg_game_score_history)
-    ax2.set_title('Avg game score ({})'.format(window))
     plt.savefig(filename)
 
 

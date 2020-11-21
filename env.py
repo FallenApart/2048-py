@@ -11,31 +11,27 @@ class Env:
     def reset(self):
         self.done = False
         self.reward = 0
+        self.valid_actions = [0, 1, 2, 3]  # 0 - right, 1 - left, 2 - up, 3 - down
         self.state = np.zeros((self.nb_rows, self.nb_cols))
         self.update_empty_cells()
         self.add_number()
         self.add_number()
         return self.state
 
-    def step(self, action, score):
-        state = np.copy(self.state)
+    def step(self, action):
         self.reward = 0
         if action == 0:
-            self.move_right()
+            self.state = self.move_right(self.state)
         elif action == 1:
-            self.move_left()
+            self.state = self.move_left(self.state)
         elif action == 2:
-            self.move_up()
+            self.state = self.move_up(self.state)
         elif action == 3:
-            self.move_down()
-        if np.array_equal(state, self.state):
-            punishpent = - np.abs(score) / 2 - 10
-        else:
-            punishpent = 0
-            self.update_empty_cells()
-            self.add_number()
+            self.state = self.move_down(self.state)
+        self.update_empty_cells()
+        self.add_number()
         self.is_done()
-        return self.state, self.reward, self.done, None, punishpent
+        return self.state, self.reward, self.done, None
 
     def update_empty_cells(self):
         self.empty_cells = self.state == 0
@@ -46,6 +42,7 @@ class Env:
         r = np.random.rand(1)[0]
         self.state[selected_cell[0], selected_cell[1]] = 2 if r < 0.9 else 4
         self.update_empty_cells()
+        self.update_valid_actions()
 
     @staticmethod
     def slide_row_right(row):
@@ -64,26 +61,30 @@ class Env:
         row = self.slide_row_right(row)
         return row
 
-    def move_right(self):
+    def move_right(self, state):
         for row in range(self.nb_rows):
-            self.state[row] = self.move_row_right(self.state[row])
+            new_state[row] = self.move_row_right(state[row])
+        return new_state
 
-    def move_left(self):
-        self.state = np.flip(self.state, axis=1)
-        self.move_right()
-        self.state = np.flip(self.state, axis=1)
+    def move_left(self, state):
+        new_state = np.flip(state, axis=1)
+        new_state = self.move_right(new_state)
+        new_state = np.flip(new_state, axis=1)
+        return new_state
 
-    def move_down(self):
-        self.state = self.state.T
-        self.move_right()
-        self.state = self.state.T
+    def move_down(self, state):
+        new_state = state.T
+        new_state = self.move_right(new_state)
+        new_state = new_state.T
+        return new_state
 
-    def move_up(self):
-        self.state = self.state.T
-        self.state = np.flip(self.state, axis=1)
-        self.move_right()
-        self.state = np.flip(self.state, axis=1)
-        self.state = self.state.T
+    def move_up(self, state):
+        new_state = state.T
+        new_state = np.flip(new_state, axis=1)
+        new_state = self.move_right(new_state)
+        new_state = np.flip(new_state, axis=1)
+        new_state = new_state.T
+        return new_state
 
     def is_done(self):
         if np.sum(self.empty_cells) == 0:
@@ -94,6 +95,9 @@ class Env:
                     if row != self.nb_rows-1 and self.state[row][col] == self.state[row+1][col]:
                         return None
             self.done = True
+
+    def update_valid_actions(self):
+        pass
 
 
 if __name__ == '__main__':
