@@ -11,7 +11,7 @@ class Env:
     def reset(self):
         self.done = False
         self.reward = 0
-        self.valid_actions = [0, 1, 2, 3]  # 0 - right, 1 - left, 2 - up, 3 - down
+        self.valid_actions = np.array([1, 1, 1, 1])  # 0pos - right, 1pos - left, 2pos - up, 3pos - down, 0 - valid, 1 - invalis
         self.state = np.zeros((self.nb_rows, self.nb_cols))
         self.update_empty_cells()
         self.add_number()
@@ -20,6 +20,7 @@ class Env:
 
     def step(self, action):
         self.reward = 0
+        # if action in self.valid_actions:
         if action == 0:
             self.state = self.move_right(self.state)
         elif action == 1:
@@ -42,7 +43,7 @@ class Env:
         r = np.random.rand(1)[0]
         self.state[selected_cell[0], selected_cell[1]] = 2 if r < 0.9 else 4
         self.update_empty_cells()
-        self.update_valid_actions()
+        # self.update_valid_actions()
 
     @staticmethod
     def slide_row_right(row):
@@ -62,6 +63,7 @@ class Env:
         return row
 
     def move_right(self, state):
+        new_state = np.copy(state)
         for row in range(self.nb_rows):
             new_state[row] = self.move_row_right(state[row])
         return new_state
@@ -97,7 +99,19 @@ class Env:
             self.done = True
 
     def update_valid_actions(self):
-        pass
+        self.valid_actions = np.array([1, 1, 1, 1])
+        new_state = self.move_right(self.state)
+        if np.array_equal(new_state, self.state):
+            self.valid_actions[0] = 0
+        new_state = self.move_left(self.state)
+        if np.array_equal(new_state, self.state):
+            self.valid_actions[1] = 0
+        new_state = self.move_up(self.state)
+        if np.array_equal(new_state, self.state):
+            self.valid_actions[2] = 0
+        new_state = self.move_down(self.state)
+        if np.array_equal(new_state, self.state):
+            self.valid_actions[3] = 0
 
 
 if __name__ == '__main__':

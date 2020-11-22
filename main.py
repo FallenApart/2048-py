@@ -32,7 +32,7 @@ def main(args):
         state_np = env.reset()
 
         while not done:
-            action_np = agent.choose_action(state_np)
+            action_np = agent.choose_action(state_np, env.valid_actions)
             new_state_np, reward_np, done, info = env.step(action_np)
             agent.store_transition(state_np, action_np, reward_np)
             state_np = new_state_np

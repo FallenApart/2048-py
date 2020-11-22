@@ -14,15 +14,16 @@ class Agent:
         self.policy = get_policy_network(self.nb_actions)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
 
-    def get_action_probs(self, state_np, training=None):
+    def get_action_probs(self, state_np, valid_actions, training=None):
         state = tf.convert_to_tensor([state_np], dtype=tf.float32)
         probs = self.policy(state, training=training)
         action_probs = tfp.distributions.Categorical(probs=probs)
 
+
         return action_probs
 
-    def choose_action(self, state_np):
-        action_probs = self.get_action_probs(state_np, training=False)
+    def choose_action(self, state_np, valid_actions):
+        action_probs = self.get_action_probs(state_np, valid_actions, training=False)
         action = action_probs.sample()
 
         return action.numpy()[0]
