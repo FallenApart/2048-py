@@ -1,11 +1,10 @@
+import time
 import numpy as np
 from agent import Agent
 from env import Env
-import matplotlib.pyplot as plt
 import tensorflow as tf
 from argparse import ArgumentParser
 from copy import deepcopy
-from utils import fig_to_ftimage
 
 import subprocess
 
@@ -17,7 +16,7 @@ for gpu in gpus:
 
 
 def main(args):
-    agent = Agent(lr=0.001, gamma=1, nb_actions=4)
+    agent = Agent(lr=0.001, gamma=0.99, nb_actions=4)
     env = Env()
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
@@ -29,27 +28,32 @@ def main(args):
     tb_summary_writer = tf.summary.create_file_writer(tb_logs_dir)
 
     for i in range(nb_episodes):
+        total_time_start = time.time()
+
         done = False
         score = 0
         state_np = env.reset()
         step = 0
 
+        start_time = time.time()
         while not done:
             valid_actions = deepcopy(env.valid_actions)
-            action_np = agent.choose_action(state_np, valid_actions)
+            action_np = agent.choose_actions(np.expand_dims(state_np, axis=0)).numpy()[0]
             new_state_np, reward_np, done, info = env.step(action_np)
             agent.store_transition(state_np, action_np, reward_np, valid_actions)
             state_np = new_state_np
             score += reward_np
-            # if env.invalid_moves_cnt >= 100:
-            #     done = True
-            step += 1
-            if step == 100:
+            if env.invalid_moves_cnt >= 100:
                 done = True
+            step += 1
+            # if step == 100:
+            #     done = True
 
-        # score += 1000 * env.invalid_moves_cnt
+        rewards = agent.reward_memory
+        episode_length = len(rewards)
 
-        minus_J_delta, Gs, minus_J_delta_componentes = agent.learn()
+        simulation_time = time.time() - start_time
+        feedforward_time, backprop_time = agent.learn()
 
         score_history.append(score)
         game_score_history.append(env.game_score)
@@ -58,40 +62,22 @@ def main(args):
         avg_score_history.append(avg_score)
         avg_game_score_history.append(avg_game_score)
 
-        print('Episode: {}; -J_delta: {:.3f}; Score: {:.1f}; Avg score: {:.1f}'.format(i, minus_J_delta, score, avg_score))
+        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}'.format(i, score, avg_score))
         print('Nb of steps {}'.format(step))
         print('Max value {}'.format(env.max_value))
         print('Nb invalid moves: {}'. format(env.invalid_moves_cnt))
-
-        fig = plt.figure(figsize=(10, 10))
-        plt.plot(Gs)
-        Gs_img = fig_to_ftimage(fig)
-
-        # plt.ylim(-10, 10)
-        plt.plot(minus_J_delta_componentes)
-        minus_J_delta_componentes_img = fig_to_ftimage(fig)
 
         with tb_summary_writer.as_default():
             tf.summary.scalar('score', score, step=i)
             tf.summary.scalar('avg score', avg_score, step=i)
             tf.summary.scalar('game score', env.game_score, step=i)
             tf.summary.scalar('avg game score', avg_game_score, step=i)
-            tf.summary.scalar('-J_delta', minus_J_delta, step=i)
             tf.summary.scalar('max value', env.max_value, step=i)
             tf.summary.scalar('nb invalid moves', env.invalid_moves_cnt, step=i)
             tf.summary.scalar('nb steps', step, step=i)
 
-            tf.summary.image('Gs', Gs_img, step=i)
-            tf.summary.image('-J_delta_components', minus_J_delta_componentes_img, step=i)
-
-    filename = 'logs/{}/fig.png'.format(args.idx)
-    fig, (ax1, ax2) = plt.subplots(2)
-    ax1.set_title('Score')
-    ax1.plot(score_history)
-    ax2.plot(avg_score_history)
-    ax2.set_title('Avg score ({})'.format(window))
-
-    plt.savefig(filename)
+        print('Episode length: {}; Times: simulation - {:.3f}; feedforward - {:.3f}; backprop - {:.3f}; total - {:.3f}'.format(
+                episode_length, simulation_time, feedforward_time, backprop_time, time.time() - total_time_start))
 
 
 if __name__ == '__main__':

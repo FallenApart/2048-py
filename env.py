@@ -34,7 +34,7 @@ class Env:
             self.is_done()
             self.game_score += reward
         else:
-            reward = 0
+            reward = - 10
             self.invalid_moves_cnt += 1
         self.max_value = np.max(self.state)
         return self.state, reward, self.done, None
