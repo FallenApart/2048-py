@@ -3,27 +3,28 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
 import numpy as np
-from model import get_policy_network
+from models import get_policy_network
 
 
 class Agent:
-    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4):
+    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, name='dnn3'):
         self.lr = lr
         self.gamma = gamma
         self.nb_actions = nb_actions
         self.state_memory, self.action_memory, self.reward_memory = [], [], []
         self.valid_actions_memory = []
-        self.policy = get_policy_network(self.nb_actions)
+        self.policy = get_policy_network(self.nb_actions, name)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
 
     def get_action_probs(self, states, training=None):
-        probs = self.policy(states, training=training)
+        probs = self.policy(np.expand_dims(states, axis=-1), training=training)
         action_probs = tfp.distributions.Categorical(probs=probs)
         return action_probs
 
     def choose_actions(self, states):
-        actions_probs = self.get_action_probs(states, training=False)
-        actions = actions_probs.sample()
+        with tf.device("/cpu:0"):
+            actions_probs = self.get_action_probs(states, training=False)
+            actions = actions_probs.sample()
         return actions
 
     def store_transition(self, state_np, action_np, reward_np):

@@ -119,22 +119,21 @@ if __name__ == '__main__':
     scores = []
 
     for _ in range(100):
-
+        start = time()
         step = 0
         score = 0
         env.reset()
         done = False
         while not done:
             action = np.random.randint(0, 4, size=1)[0]
-            start = time()
             new_state, reward, done, info = env.step(action)
-            print('Step: {:.3f} ms'.format((time() - start) * 1000))
             step += 1
             # print('Step: {}'.format(step))
             # print(new_state)
             # score += reward
             # if env.invalid_moves_cnt >= 100:
             #     done = True
+        print('Simulation time: {:.3f} ms'.format((time() - start) * 1000))
 
         print('Game done, Score: {}. Max tile: {}'.format(env.game_score, env.max_value))
 

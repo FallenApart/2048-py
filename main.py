@@ -4,8 +4,6 @@ from agent import Agent
 from env import Env
 import tensorflow as tf
 from argparse import ArgumentParser
-from copy import deepcopy
-
 import subprocess
 
 rc = subprocess.call("echo $LD_LIBRARY_PATH", shell=True)
@@ -16,7 +14,7 @@ for gpu in gpus:
 
 
 def main(args):
-    agent = Agent(lr=0.001, gamma=0.5, nb_actions=4)
+    agent = Agent(lr=args.lr, gamma=args.gamma, nb_actions=4, name=args.dnn_name)
     env = Env()
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
@@ -24,7 +22,7 @@ def main(args):
 
     window = 100
 
-    tb_logs_dir = 'logs/{}'.format(args.idx)
+    tb_logs_dir = 'logs/{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.idx, args.lr)
     tb_summary_writer = tf.summary.create_file_writer(tb_logs_dir)
 
     for i in range(nb_episodes):
@@ -75,6 +73,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
+    parser.add_argument('--dnn_name', type=str, default='cnn')
+    parser.add_argument('--gamma', type=float, default=0.5)
+    parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)
