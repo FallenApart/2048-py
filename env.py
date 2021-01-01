@@ -1,5 +1,6 @@
 import numpy as np
-
+from time import time
+from copy import deepcopy
 
 class Env:
     def __init__(self, nb_rows=4, nb_cols=4):
@@ -8,34 +9,36 @@ class Env:
         self.reset()
 
     def reset(self):
+        # start = time()
         self.max_value = 0
         self.invalid_moves_cnt = 0
         self.done = False
         self.game_score = 0
-        self.valid_actions = [0, 1, 2, 3]  # 0 - right, 1 - left, 2 - up, 3 - down
         self.state = np.zeros((self.nb_rows, self.nb_cols))
         self.update_empty_cells()
         self.add_number()
         self.add_number()
+        # print('reset time: {:.3f} ms'.format((time() - start) * 1000))
         return self.state
 
     def step(self, action):
-        if action in self.valid_actions:
-            if action == 0:
-                self.state, reward = self.move_right(self.state)
-            elif action == 1:
-                self.state, reward = self.move_left(self.state)
-            elif action == 2:
-                self.state, reward = self.move_up(self.state)
-            elif action == 3:
-                self.state, reward = self.move_down(self.state)
+        old_state = deepcopy(self.state)
+        if action == 0:
+            self.state, reward = self.move_right(self.state)
+        elif action == 1:
+            self.state, reward = self.move_left(self.state)
+        elif action == 2:
+            self.state, reward = self.move_up(self.state)
+        elif action == 3:
+            self.state, reward = self.move_down(self.state)
+        if np.array_equal(old_state, self.state):
+            reward = 0
+            self.invalid_moves_cnt += 1
+        else:
             self.update_empty_cells()
             self.add_number()
             self.is_done()
             self.game_score += reward
-        else:
-            reward = - 10
-            self.invalid_moves_cnt += 1
         self.max_value = np.max(self.state)
         return self.state, reward, self.done, None
 
@@ -43,15 +46,13 @@ class Env:
         self.empty_cells = self.state == 0
 
     def add_number(self):
-        try:
-            empty_cells_idxs = np.transpose(self.empty_cells.nonzero())
-        except:
-            print("An exception occurred")
+        # start = time()
+        empty_cells_idxs = np.transpose(self.empty_cells.nonzero())
         selected_cell = empty_cells_idxs[np.random.choice(empty_cells_idxs.shape[0], 1, replace=False)][0]
         r = np.random.rand(1)[0]
         self.state[selected_cell[0], selected_cell[1]] = 2 if r < 0.9 else 4
         self.update_empty_cells()
-        self.update_valid_actions()
+        # print('Add number: {:.3f} ms'.format((time() - start) * 1000))
 
     @staticmethod
     def slide_row_right(row):
@@ -100,6 +101,7 @@ class Env:
         return new_state, reward
 
     def is_done(self):
+        # start = time()
         if np.sum(self.empty_cells) == 0:
             for row in range(self.nb_rows):
                 for col in range(self.nb_cols):
@@ -108,21 +110,7 @@ class Env:
                     if row != self.nb_rows-1 and self.state[row][col] == self.state[row+1][col]:
                         return None
             self.done = True
-
-    def update_valid_actions(self):
-        self.valid_actions = [0, 1, 2, 3]
-        new_state, _ = self.move_right(self.state)
-        if np.array_equal(new_state, self.state):
-            self.valid_actions.remove(0)
-        new_state, _ = self.move_left(self.state)
-        if np.array_equal(new_state, self.state):
-            self.valid_actions.remove(1)
-        new_state, _ = self.move_up(self.state)
-        if np.array_equal(new_state, self.state):
-            self.valid_actions.remove(2)
-        new_state, _ = self.move_down(self.state)
-        if np.array_equal(new_state, self.state):
-            self.valid_actions.remove(3)
+        # print('Check if done: {:.3f} ms'.format((time() - start) * 1000))
 
 
 if __name__ == '__main__':
@@ -130,7 +118,7 @@ if __name__ == '__main__':
 
     scores = []
 
-    for _ in range(10):
+    for _ in range(100):
 
         step = 0
         score = 0
@@ -138,13 +126,15 @@ if __name__ == '__main__':
         done = False
         while not done:
             action = np.random.randint(0, 4, size=1)[0]
+            start = time()
             new_state, reward, done, info = env.step(action)
+            print('Step: {:.3f} ms'.format((time() - start) * 1000))
             step += 1
             # print('Step: {}'.format(step))
             # print(new_state)
             # score += reward
-            if step == 100:
-                done = True
+            # if env.invalid_moves_cnt >= 100:
+            #     done = True
 
         print('Game done, Score: {}. Max tile: {}'.format(env.game_score, env.max_value))
 

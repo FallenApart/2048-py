@@ -16,7 +16,7 @@ for gpu in gpus:
 
 
 def main(args):
-    agent = Agent(lr=0.001, gamma=0.99, nb_actions=4)
+    agent = Agent(lr=0.001, gamma=0.5, nb_actions=4)
     env = Env()
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
@@ -37,10 +37,9 @@ def main(args):
 
         start_time = time.time()
         while not done:
-            valid_actions = deepcopy(env.valid_actions)
             action_np = agent.choose_actions(np.expand_dims(state_np, axis=0)).numpy()[0]
             new_state_np, reward_np, done, info = env.step(action_np)
-            agent.store_transition(state_np, action_np, reward_np, valid_actions)
+            agent.store_transition(state_np, action_np, reward_np)
             state_np = new_state_np
             score += reward_np
             if env.invalid_moves_cnt >= 100:
@@ -48,9 +47,6 @@ def main(args):
             step += 1
             # if step == 100:
             #     done = True
-
-        rewards = agent.reward_memory
-        episode_length = len(rewards)
 
         simulation_time = time.time() - start_time
         feedforward_time, backprop_time = agent.learn()
@@ -62,10 +58,7 @@ def main(args):
         avg_score_history.append(avg_score)
         avg_game_score_history.append(avg_game_score)
 
-        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}'.format(i, score, avg_score))
-        print('Nb of steps {}'.format(step))
-        print('Max value {}'.format(env.max_value))
-        print('Nb invalid moves: {}'. format(env.invalid_moves_cnt))
+        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}; Max value: {}'.format(i, score, avg_score, env.max_value))
 
         with tb_summary_writer.as_default():
             tf.summary.scalar('score', score, step=i)
@@ -76,8 +69,8 @@ def main(args):
             tf.summary.scalar('nb invalid moves', env.invalid_moves_cnt, step=i)
             tf.summary.scalar('nb steps', step, step=i)
 
-        print('Episode length: {}; Times: simulation - {:.3f}; feedforward - {:.3f}; backprop - {:.3f}; total - {:.3f}'.format(
-                episode_length, simulation_time, feedforward_time, backprop_time, time.time() - total_time_start))
+        print('Episode length: {} ({} invalid); Times: simulation - {:.3f}; feedforward - {:.3f}; backprop - {:.3f}; total - {:.3f}'.format(
+                step, env.invalid_moves_cnt, simulation_time, feedforward_time, backprop_time, time.time() - total_time_start))
 
 
 if __name__ == '__main__':

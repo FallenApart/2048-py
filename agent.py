@@ -26,11 +26,10 @@ class Agent:
         actions = actions_probs.sample()
         return actions
 
-    def store_transition(self, state_np, action_np, reward_np, valid_actions):
+    def store_transition(self, state_np, action_np, reward_np):
         self.state_memory.append(state_np)
         self.action_memory.append(action_np)
         self.reward_memory.append(reward_np)
-        self.valid_actions_memory.append(valid_actions)
 
     def learn(self):
         G = np.zeros_like(self.reward_memory)
@@ -59,6 +58,5 @@ class Agent:
             backprop_time = time.time() - start_time
 
         self.state_memory, self.action_memory, self.reward_memory = [], [], []
-        self.valid_actions_memory = []
 
         return feedforward_time, backprop_time
