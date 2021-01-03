@@ -28,11 +28,6 @@ class DNNAgent(ABCAgent):
             actions = actions_probs.sample()
         return actions.numpy()[0]
 
-    def store_transition(self, state_np, action_np, reward_np):
-        self.state_memory.append(state_np)
-        self.action_memory.append(action_np)
-        self.reward_memory.append(reward_np)
-
     def learn(self):
         G = np.zeros_like(self.reward_memory)
         G_tmp = 0
