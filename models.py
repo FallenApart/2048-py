@@ -70,19 +70,18 @@ def cnndv2(nb_actions=4):
     return model
 
 
-
-def get_policy_network(nb_actions=4, name='dnn3'):
-    if name == 'dnn3':
+def get_policy_network(nb_actions=4, dnn_name='dnn3'):
+    if dnn_name == 'dnn3':
         model = dnn3(nb_actions=nb_actions)
-    elif name == 'dnn5':
+    elif dnn_name == 'dnn5':
         model = dnn5(nb_actions=nb_actions)
-    elif name == 'cnn':
+    elif dnn_name == 'cnn':
         model = cnn(nb_actions=nb_actions)
-    elif name == 'cnnd':
+    elif dnn_name == 'cnnd':
         model = cnnd(nb_actions=nb_actions)
-    elif name == 'cnndv2':
+    elif dnn_name == 'cnndv2':
         model = cnndv2(nb_actions=nb_actions)
-    elif name == 'minidnn':
+    elif dnn_name == 'minidnn':
         model = minidnn(nb_actions=nb_actions)
 
     return model

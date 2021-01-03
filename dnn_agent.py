@@ -4,16 +4,16 @@ import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
 import numpy as np
 from models import get_policy_network
+from abc_agent import ABCAgent
 
 
-class Agent:
-    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, name='dnn3'):
+class DNNAgent(ABCAgent):
+    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, dnn_name='dnn3'):
+        super(DNNAgent, self).__init__(nb_actions=nb_actions)
         self.lr = lr
         self.gamma = gamma
-        self.nb_actions = nb_actions
-        self.state_memory, self.action_memory, self.reward_memory = [], [], []
-        self.valid_actions_memory = []
-        self.policy = get_policy_network(self.nb_actions, name)
+        self.dnn_name = dnn_name
+        self.policy = get_policy_network(self.nb_actions, self.dnn_name)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
         self.policy.summary()
 
@@ -26,7 +26,7 @@ class Agent:
         with tf.device("/cpu:0"):
             actions_probs = self.get_action_probs(states, training=False)
             actions = actions_probs.sample()
-        return actions
+        return actions.numpy()[0]
 
     def store_transition(self, state_np, action_np, reward_np):
         self.state_memory.append(state_np)

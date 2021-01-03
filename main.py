@@ -1,7 +1,7 @@
 import os
 import time
 import numpy as np
-from agent import Agent
+from dnn_agent import DNNAgent
 from env import Env
 import tensorflow as tf
 from argparse import ArgumentParser
@@ -19,7 +19,7 @@ def main(args):
     os.makedirs(logs_dir, exist_ok=True)
     os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
 
-    agent = Agent(lr=args.lr, gamma=args.gamma, nb_actions=4, name=args.dnn_name)
+    agent = DNNAgent(lr=args.lr, gamma=args.gamma, nb_actions=4, dnn_name=args.dnn_name)
     env = Env()
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
@@ -42,7 +42,7 @@ def main(args):
 
         start_time = time.time()
         while not done:
-            action_np = agent.choose_actions(np.expand_dims(state_np, axis=0)).numpy()[0]
+            action_np = agent.choose_actions(np.expand_dims(state_np, axis=0))
             new_state_np, reward_np, done, info = env.step(action_np)
             agent.store_transition(state_np, action_np, reward_np)
             state_np = new_state_np
@@ -85,9 +85,9 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--dnn_name', type=str, default='dnn3')
-    parser.add_argument('--gamma', type=float, default=0.5)
-    parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--max_invalid_moves', type=int, default=1000)
+    parser.add_argument('--gamma', type=float, default=0.99)
+    parser.add_argument('--lr', type=float, default=0.01)
+    parser.add_argument('--max_invalid_moves', type=int, default=2000)
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)
