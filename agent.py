@@ -15,6 +15,7 @@ class Agent:
         self.valid_actions_memory = []
         self.policy = get_policy_network(self.nb_actions, name)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
+        self.policy.summary()
 
     def get_action_probs(self, states, training=None):
         probs = self.policy(np.expand_dims(states, axis=-1), training=training)

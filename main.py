@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 from agent import Agent
@@ -14,16 +15,22 @@ for gpu in gpus:
 
 
 def main(args):
+    logs_dir = 'logs/{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves, args.idx)
+    os.makedirs(logs_dir, exist_ok=True)
+    os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
+
     agent = Agent(lr=args.lr, gamma=args.gamma, nb_actions=4, name=args.dnn_name)
     env = Env()
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
-    nb_episodes = 10000
+    nb_episodes = 100000
 
     window = 100
 
-    tb_logs_dir = 'logs/{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.idx, args.lr)
+    tb_logs_dir = os.path.join(logs_dir, 'tb_logs')
     tb_summary_writer = tf.summary.create_file_writer(tb_logs_dir)
+
+    best_score = 0
 
     for i in range(nb_episodes):
         total_time_start = time.time()
@@ -40,30 +47,34 @@ def main(args):
             agent.store_transition(state_np, action_np, reward_np)
             state_np = new_state_np
             score += reward_np
-            if env.invalid_moves_cnt >= 100:
+            if env.invalid_moves_cnt >= args.max_invalid_moves:
                 done = True
             step += 1
-            # if step == 100:
-            #     done = True
 
         simulation_time = time.time() - start_time
+
+        if env.game_score * 1024 > best_score:
+            best_score = env.game_score * 1024
+            agent.policy.save(os.path.join(logs_dir, 'model', 'model.hdf5'))
+            print('New best score: {}; New model has been saved'.format(best_score))
+
         feedforward_time, backprop_time = agent.learn()
 
         score_history.append(score)
-        game_score_history.append(env.game_score)
+        game_score_history.append(env.game_score * 1024)
         avg_score = np.mean(score_history[-window:])
         avg_game_score = np.mean(game_score_history[-window:])
         avg_score_history.append(avg_score)
         avg_game_score_history.append(avg_game_score)
 
-        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}; Max value: {}'.format(i, score, avg_score, env.max_value))
+        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}; Max value: {}'.format(i, score, avg_score, env.max_value * 1024))
 
         with tb_summary_writer.as_default():
             tf.summary.scalar('score', score, step=i)
             tf.summary.scalar('avg score', avg_score, step=i)
-            tf.summary.scalar('game score', env.game_score, step=i)
+            tf.summary.scalar('game score', env.game_score  * 1024, step=i)
             tf.summary.scalar('avg game score', avg_game_score, step=i)
-            tf.summary.scalar('max value', env.max_value, step=i)
+            tf.summary.scalar('max value', env.max_value * 1024, step=i)
             tf.summary.scalar('nb invalid moves', env.invalid_moves_cnt, step=i)
             tf.summary.scalar('nb steps', step, step=i)
 
@@ -73,9 +84,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--dnn_name', type=str, default='cnn')
+    parser.add_argument('--dnn_name', type=str, default='dnn3')
     parser.add_argument('--gamma', type=float, default=0.5)
     parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--max_invalid_moves', type=int, default=1000)
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)

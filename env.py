@@ -50,7 +50,7 @@ class Env:
         empty_cells_idxs = np.transpose(self.empty_cells.nonzero())
         selected_cell = empty_cells_idxs[np.random.choice(empty_cells_idxs.shape[0], 1, replace=False)][0]
         r = np.random.rand(1)[0]
-        self.state[selected_cell[0], selected_cell[1]] = 2 if r < 0.9 else 4
+        self.state[selected_cell[0], selected_cell[1]] = 2 / 1024 if r < 0.9 else 4 / 1024
         self.update_empty_cells()
         # print('Add number: {:.3f} ms'.format((time() - start) * 1000))
 

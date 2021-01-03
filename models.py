@@ -1,9 +1,10 @@
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Flatten, Dropout, Conv2D, GlobalAvgPool2D, Softmax
+from tensorflow.keras.layers import Dense, Flatten, Dropout, Conv2D, GlobalAvgPool2D, Softmax, Input
 
 
 def minidnn(nb_actions=4):
-    model = Sequential([Flatten(),
+    model = Sequential([Input(shape=(4, 4, 1)),
+                        Flatten(),
                         Dense(64, activation='relu'),
                         Dense(64, activation='relu'),
                         Dense(nb_actions, activation='softmax')])
@@ -11,7 +12,8 @@ def minidnn(nb_actions=4):
 
 
 def dnn3(nb_actions=4):
-    model = Sequential([Flatten(),
+    model = Sequential([Input(shape=(4, 4, 1)),
+                        Flatten(),
                         Dense(256, activation='relu'),
                         Dropout(0.1),
                         Dense(256, activation='relu'),
@@ -23,7 +25,8 @@ def dnn3(nb_actions=4):
 
 
 def dnn5(nb_actions=4):
-    model = Sequential([Flatten(),
+    model = Sequential([Input(shape=(4, 4, 1)),
+                        Flatten(),
                         Dense(256, activation='relu'),
                         Dense(256, activation='relu'),
                         Dense(256, activation='relu'),
@@ -34,7 +37,8 @@ def dnn5(nb_actions=4):
 
 
 def cnn(nb_actions=4):
-    model = Sequential([Conv2D(128, (4, 4), padding='same', activation='relu'),
+    model = Sequential([Input(shape=(4, 4, 1)),
+                        Conv2D(128, (4, 4), padding='same', activation='relu'),
                         Conv2D(256, (4, 4), padding='same', activation='relu'),
                         Conv2D(512, (4, 4), padding='same', activation='relu'),
                         Conv2D(256, (4, 4), padding='same', activation='relu'),
@@ -46,7 +50,8 @@ def cnn(nb_actions=4):
 
 
 def cnnd(nb_actions=4):
-    model = Sequential([Conv2D(128, (4, 4), padding='same', activation='relu'),
+    model = Sequential([Input(shape=(4, 4, 1)),
+                        Conv2D(128, (4, 4), padding='same', activation='relu'),
                         Conv2D(256, (4, 4), padding='same', activation='relu'),
                         GlobalAvgPool2D(),
                         Dense(256, activation='relu'),
@@ -56,7 +61,8 @@ def cnnd(nb_actions=4):
 
 
 def cnndv2(nb_actions=4):
-    model = Sequential([Conv2D(512, (4, 4), padding='valid', activation='relu'),
+    model = Sequential([Input(shape=(4, 4, 1)),
+                        Conv2D(512, (4, 4), padding='valid', activation='relu'),
                         GlobalAvgPool2D(),
                         Dense(256, activation='relu'),
                         Dense(256, activation='relu'),
