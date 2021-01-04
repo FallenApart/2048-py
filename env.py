@@ -3,9 +3,10 @@ from time import time
 from copy import deepcopy
 
 class Env:
-    def __init__(self, nb_rows=4, nb_cols=4):
+    def __init__(self, nb_rows=4, nb_cols=4, normalisation=1):
         self.nb_actions = 4
         self.nb_rows, self.nb_cols = nb_rows, nb_cols
+        self.normalisation = normalisation
         self.reset()
 
     def reset(self):
@@ -50,7 +51,7 @@ class Env:
         empty_cells_idxs = np.transpose(self.empty_cells.nonzero())
         selected_cell = empty_cells_idxs[np.random.choice(empty_cells_idxs.shape[0], 1, replace=False)][0]
         r = np.random.rand(1)[0]
-        self.state[selected_cell[0], selected_cell[1]] = 2 / 1024 if r < 0.9 else 4 / 1024
+        self.state[selected_cell[0], selected_cell[1]] = 2 / self.normalisation if r < 0.9 else 4 / self.normalisation
         self.update_empty_cells()
         # print('Add number: {:.3f} ms'.format((time() - start) * 1000))
 
@@ -66,7 +67,7 @@ class Env:
         col_reward = 0
         for col in reversed(range(1, self.nb_cols)):
             if row[col] == row[col-1]:
-                col_reward += row[col]
+                col_reward += 2 * row[col]
                 row[col] = 2 * row[col]
                 row[col-1] = 0
         row = self.slide_row_right(row)

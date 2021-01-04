@@ -15,12 +15,13 @@ for gpu in gpus:
 
 
 def main(args):
-    logs_dir = 'logs/{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves, args.idx)
+    logs_dir = 'logs/{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
+                                               args.normalisation, args.idx)
     os.makedirs(logs_dir, exist_ok=True)
     os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
 
     agent = DNNAgent(lr=args.lr, gamma=args.gamma, nb_actions=4, dnn_name=args.dnn_name)
-    env = Env()
+    env = Env(normalisation=args.normalisation)
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
     nb_episodes = 100000
@@ -53,28 +54,29 @@ def main(args):
 
         simulation_time = time.time() - start_time
 
-        if env.game_score * 1024 > best_score:
-            best_score = env.game_score * 1024
+        if env.game_score * args.normalisation > best_score:
+            best_score = env.game_score * args.normalisation
             agent.policy.save(os.path.join(logs_dir, 'model', 'model.hdf5'))
             print('New best score: {}; New model has been saved'.format(best_score))
 
         feedforward_time, backprop_time = agent.learn()
 
         score_history.append(score)
-        game_score_history.append(env.game_score * 1024)
+        game_score_history.append(env.game_score * args.normalisation)
         avg_score = np.mean(score_history[-window:])
         avg_game_score = np.mean(game_score_history[-window:])
         avg_score_history.append(avg_score)
         avg_game_score_history.append(avg_game_score)
 
-        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}; Max value: {}'.format(i, score, avg_score, env.max_value * 1024))
+        print('Episode: {}; Score: {:.1f}; Avg score: {:.1f}; Max value: {}'.format(
+            i, score, avg_score, int(env.max_value * args.normalisation)))
 
         with tb_summary_writer.as_default():
             tf.summary.scalar('score', score, step=i)
             tf.summary.scalar('avg score', avg_score, step=i)
-            tf.summary.scalar('game score', env.game_score  * 1024, step=i)
+            tf.summary.scalar('game score', env.game_score * args.normalisation, step=i)
             tf.summary.scalar('avg game score', avg_game_score, step=i)
-            tf.summary.scalar('max value', env.max_value * 1024, step=i)
+            tf.summary.scalar('max value', env.max_value * args.normalisation, step=i)
             tf.summary.scalar('nb invalid moves', env.invalid_moves_cnt, step=i)
             tf.summary.scalar('nb steps', step, step=i)
 
@@ -88,6 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--max_invalid_moves', type=int, default=2000)
+    parser.add_argument('--normalisation', type=float, default=2048.0)
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)

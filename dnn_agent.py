@@ -54,6 +54,6 @@ class DNNAgent(ABCAgent):
 
             backprop_time = time.time() - start_time
 
-        self.state_memory, self.action_memory, self.reward_memory = [], [], []
+        self.reset_memory()
 
         return feedforward_time, backprop_time
