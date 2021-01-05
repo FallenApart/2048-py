@@ -23,7 +23,7 @@ class ABCAgent(ABC):
         states_list = [(state.flatten() * normalisation).astype(int).tolist() for state in self.state_memory]
         actions_list = [int(action) for action in self.action_memory]
         rewards_list = [int(reward * normalisation) for reward in self.reward_memory]
-        terminal_state = (self.terminal_state.flatten() * 1024).astype(int).tolist()
+        terminal_state = (self.terminal_state.flatten() * normalisation).astype(int).tolist()
         trajectory = {'states': states_list, 'actions': actions_list, 'rewards': rewards_list,
                       'terminal_state': terminal_state}
 

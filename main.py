@@ -15,12 +15,12 @@ for gpu in gpus:
 
 
 def main(args):
-    logs_dir = 'logs/{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
-                                               args.normalisation, args.idx)
+    logs_dir = 'logs/{}_{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
+                                                  args.normalisation, args.loss_type, args.idx)
     os.makedirs(logs_dir, exist_ok=True)
     os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
 
-    agent = DNNAgent(lr=args.lr, gamma=args.gamma, nb_actions=4, dnn_name=args.dnn_name)
+    agent = DNNAgent(lr=args.lr, gamma=args.gamma, nb_actions=4, dnn_name=args.dnn_name, loss_type=args.loss_type)
     env = Env(normalisation=args.normalisation)
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
@@ -43,7 +43,7 @@ def main(args):
 
         start_time = time.time()
         while not done:
-            action_np = agent.choose_actions(np.expand_dims(state_np, axis=0))
+            action_np = agent.choose_actions(np.expand_dims(state_np, axis=0))[0]
             new_state_np, reward_np, done, info = env.step(action_np)
             agent.store_transition(state_np, action_np, reward_np)
             state_np = new_state_np
@@ -91,6 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--max_invalid_moves', type=int, default=2000)
     parser.add_argument('--normalisation', type=float, default=2048.0)
+    parser.add_argument('--loss_type', type=str, default='Slogp_return')
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)

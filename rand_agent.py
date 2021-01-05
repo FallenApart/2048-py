@@ -7,4 +7,4 @@ class RandAgent(ABCAgent):
         super(RandAgent, self).__init__(nb_actions=nb_actions)
 
     def choose_actions(self, states):
-        return np.random.randint(0, self.nb_actions, size=1)[0]
+        return np.random.randint(0, self.nb_actions, size=states.shape[0])

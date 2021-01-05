@@ -25,7 +25,7 @@ $(document).ready(function() {
     let done = false;
     let game_score = 0;
 
-    $.getJSON("trajectory_0.json", function(json){trajectory_json = json;});
+    $.getJSON("../example/trajectory_0.json", function(json){trajectory_json = json;});
 
     $('#run').click(() => {
         run()
@@ -53,7 +53,7 @@ $(document).ready(function() {
                 console.log('active')
                 updateGrid(trajectory_json['states'][step], trajectory_json['rewards'][step-1]);
             } else if (step == trajectory_length) {
-                updateGrid(trajectory_json['terminal_state'], trajectory_json['rewards'][step]);
+                updateGrid(trajectory_json['terminal_state'], trajectory_json['rewards'][step-1]);
                 done = true;
             }
             step++;

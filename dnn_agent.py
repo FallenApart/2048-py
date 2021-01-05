@@ -8,11 +8,12 @@ from abc_agent import ABCAgent
 
 
 class DNNAgent(ABCAgent):
-    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, dnn_name='dnn3'):
+    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, dnn_name='dnn3', loss_type='sum'):
         super(DNNAgent, self).__init__(nb_actions=nb_actions)
         self.lr = lr
         self.gamma = gamma
         self.dnn_name = dnn_name
+        self.loss_type = loss_type
         self.policy = get_policy_network(self.nb_actions, self.dnn_name)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
         self.policy.summary()
@@ -26,7 +27,7 @@ class DNNAgent(ABCAgent):
         with tf.device("/cpu:0"):
             actions_probs = self.get_action_probs(states, training=False)
             actions = actions_probs.sample()
-        return actions.numpy()[0]
+        return actions.numpy()
 
     def learn(self):
         G = np.zeros_like(self.reward_memory)
@@ -41,7 +42,13 @@ class DNNAgent(ABCAgent):
 
             action_probs = self.get_action_probs(np.array(self.state_memory), training=True)
             log_probs = action_probs.log_prob(np.array(self.action_memory))
-            loss = - tf.reduce_sum(G * log_probs)
+            # See https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html for details about losses
+            if self.loss_type == 'sum': # Reward-to-go policy gradient
+                loss = - tf.reduce_sum(log_probs * G)
+            elif self.loss_type == 'mean':  # This doesn't make sense from theoretical perspective
+                loss = - tf.reduce_mean(log_probs * G)
+            elif self.loss_type == 'Slogp_return':  # This is from theoretical perspective Sum log_probs * return(trajectory)
+                loss = - tf.reduce_sum(log_probs * G[0])
 
             feedforward_time = time.time() - start_time
             start_time = time.time()
