@@ -1,4 +1,3 @@
-import time
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras.optimizers import Adam
@@ -8,12 +7,11 @@ from abc_agent import ABCAgent
 
 
 class DNNAgent(ABCAgent):
-    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, dnn_name='dnn3', loss_type='sum'):
+    def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, dnn_name='dnn3'):
         super(DNNAgent, self).__init__(nb_actions=nb_actions)
         self.lr = lr
         self.gamma = gamma
         self.dnn_name = dnn_name
-        self.loss_type = loss_type
         self.policy = get_policy_network(self.nb_actions, self.dnn_name)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
         self.policy.summary()
@@ -29,38 +27,27 @@ class DNNAgent(ABCAgent):
             actions = actions_probs.sample()
         return actions.numpy()
 
-    def learn(self):
-        G = np.zeros_like(self.reward_memory)
-        G_tmp = 0
-        for t in reversed(range(len(self.reward_memory))):
-            G[t] = G_tmp * self.gamma + self.reward_memory[t]
-            G_tmp = G[t]
-
-        start_time = time.time()
+    def learn(self, batch_state_memory, batch_action_memory, batch_reward_memory):
+        batch_G = []
+        for reward_memory in batch_reward_memory:
+            G = np.zeros_like(reward_memory)
+            G_tmp = 0
+            for t in reversed(range(len(reward_memory))):
+                G[t] = G_tmp * self.gamma + reward_memory[t]
+                G_tmp = G[t]
+            batch_G.append(G)
 
         with tf.GradientTape() as tape:
-
-            action_probs = self.get_action_probs(np.array(self.state_memory), training=True)
-            log_probs = action_probs.log_prob(np.array(self.action_memory))
-            # See https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html for details about losses
-            if self.loss_type == 'sum': # Reward-to-go policy gradient
+            losses = []
+            for state_memory, action_memory, G in zip(batch_state_memory, batch_action_memory, batch_G):
+                action_probs = self.get_action_probs(state_memory, training=True)
+                log_probs = action_probs.log_prob(action_memory)
                 loss = - tf.reduce_sum(log_probs * G)
-            elif self.loss_type == 'mean':  # This doesn't make sense from theoretical perspective
-                loss = - tf.reduce_mean(log_probs * G)
-            elif self.loss_type == 'Slogp_return':  # This is from theoretical perspective Sum log_probs * return(trajectory)
-                loss = - tf.reduce_sum(log_probs * G[0])
-
-            feedforward_time = time.time() - start_time
-            start_time = time.time()
+                losses.append(loss)
+            loss = tf.reduce_mean(losses)
 
             if tf.math.is_nan(loss):
                 print('loss is nan')
             else:
                 grads = tape.gradient(loss, self.policy.trainable_variables)
                 self.policy.optimizer.apply_gradients(zip(grads, self.policy.trainable_variables))
-
-            backprop_time = time.time() - start_time
-
-        self.reset_memory()
-
-        return feedforward_time, backprop_time
