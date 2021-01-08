@@ -14,12 +14,9 @@ def minidnn(nb_actions=4):
 def dnn3(nb_actions=4):
     model = Sequential([Input(shape=(4, 4, 1)),
                         Flatten(),
-                        Dense(256, activation='relu'),
-                        Dropout(0.1),
-                        Dense(256, activation='relu'),
-                        Dropout(0.1),
-                        Dense(256, activation='relu'),
-                        Dropout(0.1),
+                        Dense(64, activation='relu'),
+                        Dense(64, activation='relu'),
+                        Dense(64, activation='relu'),
                         Dense(nb_actions, activation='softmax')])
     return model
 

@@ -5,7 +5,6 @@ import numpy as np
 from models import get_policy_network
 from abc_agent import ABCAgent
 
-
 class DNNAgent(ABCAgent):
     def __init__(self, lr=0.0005, gamma=0.99, nb_actions=4, dnn_name='dnn3'):
         super(DNNAgent, self).__init__(nb_actions=nb_actions)

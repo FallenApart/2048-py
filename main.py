@@ -13,9 +13,8 @@ print("Num GPUs Available: ", len(gpus))
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
-
 def main(args):
-    logs_dir = 'logs/{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
+    logs_dir = 'logs/{}_{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
                                                   args.normalisation, args.batch_size, args.idx)
     os.makedirs(logs_dir, exist_ok=True)
     os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
@@ -94,14 +93,16 @@ def main(args):
                                                                              np.array(batch_scores).mean()))
 
 
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('--dnn_name', type=str, default='dnn3')
-    parser.add_argument('--batch_size', type=int, default=100)
+    parser.add_argument('--dnn_name', type=str, default='dnn5')
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--gamma', type=float, default=0.99)
-    parser.add_argument('--lr', type=float, default=0.01)
-    parser.add_argument('--max_invalid_moves', type=int, default=2000)
-    parser.add_argument('--normalisation', type=float, default=2048.0)
+    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--max_invalid_moves', type=int, default=1000)
+    parser.add_argument('--normalisation', type=float, default=1024.0)
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)
