@@ -19,7 +19,7 @@ def main(args):
     os.makedirs(logs_dir, exist_ok=True)
     os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
 
-    agent = DNNAgent(lr=args.lr, gamma=args.gamma, nb_actions=4, dnn_name=args.dnn_name)
+    agent = DNNAgent(mode=args.mode, lr=args.lr, gamma=args.gamma, nb_actions=4, dnn_name=args.dnn_name)
     env = Env(normalisation=args.normalisation)
 
     score_history, game_score_history, avg_score_history, avg_game_score_history = [], [], [], []
@@ -56,16 +56,16 @@ def main(args):
             terminal_state = state_np
 
             batch_scores.append(score_np)
-            batch_state_memory.append(np.array(agent.state_memory))
-            batch_action_memory.append(np.array(agent.action_memory))
-            batch_reward_memory.append(np.array(agent.reward_memory))
+            batch_state_memory.append(agent.state_memory)
+            batch_action_memory.append(agent.action_memory)
+            batch_reward_memory.append(agent.reward_memory)
             batch_terminal_state.append(terminal_state)
             agent.reset_memory()
 
             if score_np > best_score:
                 best_score = env.score * args.normalisation
-                agent.policy.save(os.path.join(logs_dir, 'model', 'model.hdf5'))
-                print('New best score: {}; New model has been saved'.format(best_score))
+                # agent.policy.save(os.path.join(logs_dir, 'model', 'model.hdf5'))
+                # print('New best score: {}; New model has been saved'.format(best_score))
 
             score_history.append(env.score * args.normalisation)
             avg_score = np.mean(score_history[-window:])

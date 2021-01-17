@@ -48,7 +48,8 @@ class ActorCriticModel(Model):
         self.pi = Dense(self.nb_actions, activation='softmax')
 
     def call(self, state, *args):
-        x = self.fc1(state)
+        x = self.flatten(state)
+        x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
         x = self.fc4(x)

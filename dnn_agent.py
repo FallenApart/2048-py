@@ -15,13 +15,13 @@ class DNNAgent(ABCAgent):
         self.dnn_name = dnn_name
         self.policy = get_policy_network(self.nb_actions, self.dnn_name, self.mode)
         self.policy.compile(optimizer=Adam(learning_rate=self.lr))
-        self.policy.summary()
+        # self.policy.summary()
 
     def get_action_probs(self, states, training=None):
         if self.mode == 'pg':
-            probs = self.policy(np.expand_dims(states, axis=-1), training=training)
+            probs = self.policy(states, training=training)
         elif self.mode == 'a2c':
-            _, probs = self.policy(np.expand_dims(states, axis=-1), training=training)
+            _, probs = self.policy(states, training=training)
         action_probs = tfp.distributions.Categorical(probs=probs)
         return action_probs
 
