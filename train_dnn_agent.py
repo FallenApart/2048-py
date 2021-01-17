@@ -14,8 +14,8 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 
 def main(args):
-    logs_dir = 'logs/{}_{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
-                                                  args.normalisation, args.batch_size, args.idx)
+    logs_dir = 'logs/{}_{}_{}_{}_{}_{}_{}_{}'.format(args.dnn_name, args.gamma, args.lr, args.max_invalid_moves,
+                                                     args.normalisation, args.batch_size, args.mode, args.idx)
     os.makedirs(logs_dir, exist_ok=True)
     os.makedirs(os.path.join(logs_dir, 'model'), exist_ok=True)
 
@@ -36,7 +36,7 @@ def main(args):
 
     while i < nb_episodes:
         batch_time_start = time.time()
-        batch_state_memory, batch_action_memory, batch_reward_memory = [], [], []
+        batch_state_memory, batch_action_memory, batch_reward_memory, batch_terminal_state = [], [], [], []
         batch_scores = []
         for j in range(args.batch_size):
             done = False
@@ -53,10 +53,13 @@ def main(args):
                     done = True
                 step += 1
 
+            terminal_state = state_np
+
             batch_scores.append(score_np)
             batch_state_memory.append(np.array(agent.state_memory))
             batch_action_memory.append(np.array(agent.action_memory))
             batch_reward_memory.append(np.array(agent.reward_memory))
+            batch_terminal_state.append(terminal_state)
             agent.reset_memory()
 
             if score_np > best_score:
@@ -79,7 +82,7 @@ def main(args):
                 tf.summary.scalar('nb steps', step, step=i)
             i += 1
 
-        agent.learn(batch_state_memory, batch_action_memory, batch_reward_memory)
+        agent.learn(batch_state_memory, batch_action_memory, batch_reward_memory, batch_terminal_state)
 
         print('Batch time: {:.2f} sec.; Avg batch game score: {:.1f}'.format(time.time() - batch_time_start,
                                                                              np.array(batch_scores).mean()))
@@ -93,6 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--max_invalid_moves', type=int, default=1000)
     parser.add_argument('--normalisation', type=float, default=1024.0)
+    parser.add_argument('--mode', type=str, default='a2c')
     parser.add_argument('--idx', type=int, default=0)
     args = parser.parse_args()
     main(args)

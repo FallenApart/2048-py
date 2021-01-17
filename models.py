@@ -1,4 +1,4 @@
-from tensorflow.keras import Sequential
+from tensorflow.keras import Sequential, Model
 from tensorflow.keras.layers import Dense, Flatten, Dropout, Conv2D, GlobalAvgPool2D, Softmax, Input
 
 
@@ -31,6 +31,31 @@ def dnn5(nb_actions=4):
                         Dense(256, activation='relu'),
                         Dense(nb_actions, activation='softmax')])
     return model
+
+
+class ActorCriticModel(Model):
+    def __init__(self, nb_actions=4):
+        super(ActorCriticModel, self).__init__()
+        self.nb_actions = nb_actions
+
+        self.flatten = Flatten()
+        self.fc1 = Dense(256, activation='relu')
+        self.fc2 = Dense(256, activation='relu')
+        self.fc3 = Dense(256, activation='relu')
+        self.fc4 = Dense(256, activation='relu')
+        self.fc5 = Dense(256, activation='relu')
+        self.v = Dense(1)
+        self.pi = Dense(self.nb_actions, activation='softmax')
+
+    def call(self, state, *args):
+        x = self.fc1(state)
+        x = self.fc2(x)
+        x = self.fc3(x)
+        x = self.fc4(x)
+        x = self.fc5(x)
+        v = self.v(x)
+        pi = self.pi(x)
+        return v, pi
 
 
 def cnn(nb_actions=4):
@@ -67,11 +92,14 @@ def cnndv2(nb_actions=4):
     return model
 
 
-def get_policy_network(nb_actions=4, dnn_name='dnn3'):
+def get_policy_network(nb_actions=4, dnn_name='dnn3', mode='pg'):
     if dnn_name == 'dnn3':
         model = dnn3(nb_actions=nb_actions)
     elif dnn_name == 'dnn5':
-        model = dnn5(nb_actions=nb_actions)
+        if mode == 'pg':
+            model = dnn5(nb_actions=nb_actions)
+        elif mode == 'a2c':
+            model = ActorCriticModel()
     elif dnn_name == 'cnn':
         model = cnn(nb_actions=nb_actions)
     elif dnn_name == 'cnnd':
