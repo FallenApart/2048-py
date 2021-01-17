@@ -1,9 +1,9 @@
 var trajectory_json;
 var trajectory_length;
 
-function updateGrid(flat_grid, reward) {
-    this.game_score += reward
-    $("#score").text("Score: " + this.game_score);
+function updateGrid(flat_grid, score) {
+    this.score = score
+    $("#score").text("Score: " + this.score);
     $('.cell-value').each(function(cell, obj) {
         let cell_value = flat_grid[cell];
         if (cell_value == 0) {
@@ -51,13 +51,13 @@ $(document).ready(function() {
                 updateGrid(trajectory_json['states'][step], 0);
             } else if (0 < step && step < trajectory_length) {
                 console.log('active')
-                updateGrid(trajectory_json['states'][step], trajectory_json['rewards'][step-1]);
+                updateGrid(trajectory_json['states'][step], trajectory_json['scores'][step-1]);
             } else if (step == trajectory_length) {
-                updateGrid(trajectory_json['terminal_state'], trajectory_json['rewards'][step-1]);
+                updateGrid(trajectory_json['terminal_state'], trajectory_json['scores'][step-1]);
                 done = true;
             }
             step++;
-        }, 10)
+        }, 100)
     }
 
 })

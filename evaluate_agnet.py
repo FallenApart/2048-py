@@ -27,16 +27,17 @@ def main(args):
         while not done:
             action_np = agent.choose_actions(np.expand_dims(state_np, axis=0))[0]
             new_state_np, reward_np, done, info = env.step(action_np)
-            agent.store_transition(state_np, action_np, reward_np)
+            score_np = env.score * args.normalisation
+            agent.store_transition(state_np, action_np, reward_np, score_np)
             state_np = new_state_np
             if env.invalid_moves_cnt >= args.max_invalid_moves:
-                # print("Max invalid mover reached")
+                print("Max invalid mover reached")
                 done = True
             step += 1
-        scores.append(env.game_score * args.normalisation)
+        scores.append(score_np)
 
         agent.terminal_state = state_np
-        # agent.dump_trajectory(args.normalisation, idx)
+        agent.dump_trajectory(args.normalisation, idx)
 
         agent.reset_memory()
 
@@ -46,7 +47,7 @@ def main(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--agent_type', type=str, default='dnn')
-    parser.add_argument('--nb_episodes', type=int, default=100)
+    parser.add_argument('--nb_episodes', type=int, default=1)
     parser.add_argument('--max_invalid_moves', type=int, default=2000)
     parser.add_argument('--dnn_name', type=str, default='dnn5')
     parser.add_argument('--normalisation', type=float, default=1024.0)

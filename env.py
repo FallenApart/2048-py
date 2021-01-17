@@ -14,7 +14,7 @@ class Env:
         self.max_value = 0
         self.invalid_moves_cnt = 0
         self.done = False
-        self.game_score = 0
+        self.score = 0
         self.state = np.zeros((self.nb_rows, self.nb_cols))
         self.update_empty_cells()
         self.add_number()
@@ -39,7 +39,8 @@ class Env:
             self.update_empty_cells()
             self.add_number()
             self.is_done()
-            self.game_score += reward
+            self.score += reward
+            reward += 1 / self.normalisation
         self.max_value = np.max(self.state)
         return self.state, reward, self.done, None
 
@@ -136,9 +137,9 @@ if __name__ == '__main__':
             #     done = True
         print('Simulation time: {:.3f} ms'.format((time() - start) * 1000))
 
-        print('Game done, Score: {}. Max tile: {}'.format(env.game_score, env.max_value))
+        print('Game done, Score: {}. Max tile: {}'.format(env.score, env.max_value))
 
-        scores.append(env.game_score)
+        scores.append(env.score)
 
     print("Avg score: {}, std: {}".format(np.mean(scores), np.std(scores)))
 

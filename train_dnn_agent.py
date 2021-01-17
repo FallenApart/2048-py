@@ -39,60 +39,50 @@ def main(args):
         batch_state_memory, batch_action_memory, batch_reward_memory = [], [], []
         batch_scores = []
         for j in range(args.batch_size):
-
             done = False
-            score = 0
             state_np = env.reset()
             step = 0
-
             while not done:
                 action_np = agent.choose_actions(np.expand_dims(state_np, axis=0))[0]
                 new_state_np, reward_np, done, info = env.step(action_np)
-                agent.store_transition(state_np, action_np, reward_np)
+                score_np = env.score * args.normalisation
+                agent.store_transition(state_np, action_np, reward_np, score_np)
                 state_np = new_state_np
-                score += reward_np
                 if env.invalid_moves_cnt >= args.max_invalid_moves:
+                    print("Max invalid mover reached")
                     done = True
                 step += 1
 
-            batch_scores.append(env.game_score)
+            batch_scores.append(score_np)
             batch_state_memory.append(np.array(agent.state_memory))
             batch_action_memory.append(np.array(agent.action_memory))
             batch_reward_memory.append(np.array(agent.reward_memory))
             agent.reset_memory()
 
-            if env.game_score * args.normalisation > best_score:
-                best_score = env.game_score * args.normalisation
+            if score_np > best_score:
+                best_score = env.score * args.normalisation
                 agent.policy.save(os.path.join(logs_dir, 'model', 'model.hdf5'))
                 print('New best score: {}; New model has been saved'.format(best_score))
 
-            score_history.append(score)
-            game_score_history.append(env.game_score * args.normalisation)
+            score_history.append(env.score * args.normalisation)
             avg_score = np.mean(score_history[-window:])
-            avg_game_score = np.mean(game_score_history[-window:])
             avg_score_history.append(avg_score)
-            avg_game_score_history.append(avg_game_score)
 
             print('Episode: {}; Score: {}; Avg score: {:.1f}; Max value: {}'.format(
-                i, game_score_history[-1], avg_game_score, int(env.max_value * args.normalisation)))
+                i, score_history[-1], avg_score, int(env.max_value * args.normalisation)))
 
             with tb_summary_writer.as_default():
-                tf.summary.scalar('score', score, step=i)
+                tf.summary.scalar('score', score_np, step=i)
                 tf.summary.scalar('avg score', avg_score, step=i)
-                tf.summary.scalar('game score', env.game_score * args.normalisation, step=i)
-                tf.summary.scalar('avg game score', avg_game_score, step=i)
                 tf.summary.scalar('max value', env.max_value * args.normalisation, step=i)
                 tf.summary.scalar('nb invalid moves', env.invalid_moves_cnt, step=i)
                 tf.summary.scalar('nb steps', step, step=i)
-
             i += 1
 
         agent.learn(batch_state_memory, batch_action_memory, batch_reward_memory)
 
         print('Batch time: {:.2f} sec.; Avg batch game score: {:.1f}'.format(time.time() - batch_time_start,
                                                                              np.array(batch_scores).mean()))
-
-
 
 
 if __name__ == '__main__':
